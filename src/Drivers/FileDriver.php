@@ -107,6 +107,7 @@ class FileDriver extends AbstractDriver
 
     public function increment(string $key, int $value = 1): int
     {
+        self::validateKey($key);
         $payload = $this->loadPayload($key);
 
         if ($payload === null) {

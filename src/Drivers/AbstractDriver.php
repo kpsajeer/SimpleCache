@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace SimpleCache\Drivers;
 
@@ -10,16 +10,36 @@ use SimpleCache\Support\Statistics;
 abstract class AbstractDriver implements CacheDriverInterface
 {
     protected static ?object $notFound;
+    protected const RESERVED_CHARACTERS = '/[{}()\/\\\\@:]/';
 
     public function __construct()
     {
         self::$notFound ??= new \stdClass();
     }
 
-    protected function validateKey(string $key): void
+    /**
+     * Validate a cache key.
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected static function validateKey(string $key): void
     {
         if ($key === '') {
-            throw new \InvalidArgumentException('Cache key must not be empty.');
+            throw new \InvalidArgumentException(
+                'Cache key cannot be empty.'
+            );
+        }
+
+        if (mb_strlen($key, '8bit') > 255) {
+            throw new \InvalidArgumentException(
+                'Cache key must not exceed 255 characters.'
+            );
+        }
+
+        if (preg_match(self::RESERVED_CHARACTERS, $key) === 1) {
+            throw new \InvalidArgumentException(
+                'Cache key contains reserved characters.'
+            );
         }
     }
 
@@ -33,9 +53,12 @@ abstract class AbstractDriver implements CacheDriverInterface
 
     abstract protected function doHas(string $key): bool;
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function get(string $key, mixed $default = null): mixed
     {
-        $this->validateKey($key);
+        self::validateKey($key);
 
         $value = $this->doGet($key);
         if ($value === self::$notFound) {
@@ -46,23 +69,32 @@ abstract class AbstractDriver implements CacheDriverInterface
         return $value;
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function put(string $key, mixed $value, int $ttl = 0): bool
     {
-        $this->validateKey($key);
+        self::validateKey($key);
 
         return $this->doPut($key, $value, $ttl);
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function has(string $key): bool
     {
-        $this->validateKey($key);
+        self::validateKey($key);
 
         return $this->doHas($key);
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function forget(string $key): bool
     {
-        $this->validateKey($key);
+        self::validateKey($key);
 
         return $this->doDelete($key);
     }
@@ -72,10 +104,11 @@ abstract class AbstractDriver implements CacheDriverInterface
         return $this->doClear();
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function remember(string $key, int $ttl, callable $callback): mixed
     {
-        $this->validateKey($key);
-
         $value = $this->get($key, self::$notFound);
 
         if ($value !== self::$notFound) {
@@ -89,16 +122,20 @@ abstract class AbstractDriver implements CacheDriverInterface
         return $value;
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function forever(string $key, mixed $value): bool
     {
-        $this->validateKey($key);
-
         return $this->put($key, $value, 0);
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function add(string $key, mixed $value, int $ttl = 0): bool
     {
-        $this->validateKey($key);
+        self::validateKey($key);
 
         if ($this->has($key)) {
             return false;
@@ -107,10 +144,11 @@ abstract class AbstractDriver implements CacheDriverInterface
         return $this->put($key, $value, $ttl);
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public function pull(string $key, mixed $default = null): mixed
     {
-        $this->validateKey($key);
-
         $value = $this->get($key, self::$notFound);
 
         if ($value === self::$notFound) {

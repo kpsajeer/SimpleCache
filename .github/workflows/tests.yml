@@ -33,6 +33,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
           extensions: apcu
+          ini-values: apc.enable_cli=1
 
       - name: Validate composer.json
         run: composer validate --strict

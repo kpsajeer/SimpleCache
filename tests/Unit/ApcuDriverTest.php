@@ -10,8 +10,8 @@ class ApcuDriverTest extends TestCase
 {
     protected function setUp(): void
     {
-        if (! extension_loaded('apcu')) {
-            $this->markTestSkipped();
+        if (!extension_loaded('apcu') || !filter_var(ini_get('apc.enable_cli'), FILTER_VALIDATE_BOOL)) {
+            $this->markTestSkipped('APCu CLI is not enabled.');
         }
 
         \apcu_clear_cache();

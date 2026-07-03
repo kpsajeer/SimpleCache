@@ -64,6 +64,7 @@ class ArrayDriver extends AbstractDriver
 
     public function increment(string $key, int $value = 1): int
     {
+        self::validateKey($key);
         if (! isset($this->storage[$key])) {
             $this->storage[$key] = [
                 'expires' => 0,

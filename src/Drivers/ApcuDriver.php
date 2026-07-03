@@ -8,10 +8,11 @@ class ApcuDriver extends AbstractDriver
 {
     private function initializeCounter(string $key): void
     {
-        if (! \apcu_exists($key)) {
-            \apcu_add($key, 0);
+        if (!\apcu_exists($key) && !\apcu_add($key, 0)) {
+            throw new \RuntimeException(
+                "Failed to initialize APCu counter '{$key}'."
+            );
         }
-
     }
 
     protected function doGet(string $key): mixed
@@ -43,7 +44,7 @@ class ApcuDriver extends AbstractDriver
 
     public function increment(string $key, int $value = 1): int
     {
-        $this->validateKey($key);
+        self::validateKey($key);
         $this->initializeCounter($key);
 
         $success  = false;
@@ -60,7 +61,7 @@ class ApcuDriver extends AbstractDriver
 
     public function decrement(string $key, int $value = 1): int
     {
-        $this->validateKey($key);
+        self::validateKey($key);
         $this->initializeCounter($key);
 
         $success  = false;
