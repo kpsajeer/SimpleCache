@@ -1,0 +1,36 @@
+{
+    "name": "sajeer/reusable-cache",
+    "description": "Reusable PHP Cache Component",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "SimpleCache\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sajeer",
+            "email": "sajeer@bolasintelli.co.in"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "fix": "php-cs-fixer fix",
+        "analyse": "phpstan analyse",
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "check": [
+            "@fix",
+            "@analyse",
+            "@test"
+        ]
+    }
+}
