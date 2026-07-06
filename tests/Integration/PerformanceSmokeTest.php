@@ -12,7 +12,7 @@ class PerformanceSmokeTest extends TestCase
 {
     protected function setUp(): void
     {
-        Cache::setDriver(CacheDriver::ARRAY);
+        Cache::driver(CacheDriver::ARRAY);
         Cache::clear();
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace SimpleCache\Drivers;
 
@@ -16,6 +16,11 @@ class FileDriver extends AbstractDriver
     public function __construct(string $path)
     {
         parent::__construct();
+        if (trim($path) === '') {
+            throw new InvalidArgumentException(
+                'File cache path is required.'
+            );
+        }
         $this->path = rtrim($path, DIRECTORY_SEPARATOR);
 
         if ($this->path === '') {
@@ -92,7 +97,7 @@ class FileDriver extends AbstractDriver
     protected function doClear(): bool
     {
         $result = true;
-        $files = glob($this->path . DIRECTORY_SEPARATOR . '*.cache');
+        $files  = glob($this->path . DIRECTORY_SEPARATOR . '*.cache');
         if ($files === false) {
             return true;
         }

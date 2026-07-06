@@ -12,7 +12,7 @@ class CacheFacadeTest extends TestCase
 {
     protected function setUp(): void
     {
-        Cache::setDriver(CacheDriver::ARRAY);
+        Cache::driver(CacheDriver::ARRAY);
     }
 
     public function testPutAndGetThroughFacade()
@@ -22,10 +22,10 @@ class CacheFacadeTest extends TestCase
         $this->assertSame('bar', Cache::get('foo'));
     }
 
-    public function testDriverNameReturnsClassName()
+    public function testDriverClassReturnsClassName()
     {
-        Cache::setDriver(CacheDriver::ARRAY);
+        Cache::driver(CacheDriver::ARRAY);
 
-        $this->assertStringContainsString('ArrayDriver', Cache::driverName());
+        $this->assertStringContainsString('ArrayDriver', Cache::driverClass());
     }
 }

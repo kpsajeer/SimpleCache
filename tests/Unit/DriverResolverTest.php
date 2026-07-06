@@ -5,7 +5,7 @@ declare (strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use SimpleCache\Config\Config;
+use SimpleCache\Cache;
 use SimpleCache\Core\DriverResolver;
 use SimpleCache\Enums\CacheDriver;
 
@@ -23,13 +23,14 @@ class DriverResolverTest extends TestCase
         $this->assertSame($expected, DriverResolver::resolve(CacheDriver::APCU));
     }
 
+    protected function setUp(): void
+    {
+        Cache::resetConfig();
+    }
+
     public function testResolveFallsBackToArrayForInvalidConfig(): void
     {
-        Config::set('driver', 'invalid');
-
-        $this->assertSame(
-            CacheDriver::ARRAY,
-            DriverResolver::resolve()
-        );
+        $this->expectException(\InvalidArgumentException::class);
+        Cache::setConfig('driver', 'invalid');
     }
 }

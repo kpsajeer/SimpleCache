@@ -12,12 +12,12 @@ class DriverSwitchTest extends TestCase
 {
     public function testSwitchingDriversChangesFacadeImplementation()
     {
-        Cache::setDriver(CacheDriver::ARRAY);
-        $this->assertStringContainsString('ArrayDriver', Cache::driverName());
+        Cache::driver(CacheDriver::ARRAY);
+        $this->assertStringContainsString('ArrayDriver', Cache::driverClass());
 
         if (extension_loaded('apcu')) {
-            Cache::setDriver(CacheDriver::APCU);
-            $this->assertStringContainsString('ApcuDriver', Cache::driverName());
+            Cache::driver(CacheDriver::APCU);
+            $this->assertStringContainsString('ApcuDriver', Cache::driverClass());
         }
     }
 }

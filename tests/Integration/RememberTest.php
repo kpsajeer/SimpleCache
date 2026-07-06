@@ -12,7 +12,7 @@ class RememberTest extends TestCase
 {
     protected function setUp(): void
     {
-        Cache::setDriver(CacheDriver::ARRAY);
+        Cache::driver(CacheDriver::ARRAY);
     }
 
     public function testRememberStoresAndReturnsValue()

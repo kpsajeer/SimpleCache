@@ -43,36 +43,101 @@ composer require simple-cache/simple-cache
 
 ## Configuration
 
-Create a configuration file.
+Create a configuration file and load it at runtime.
 
 ```php
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cache Driver
-    |--------------------------------------------------------------------------
-    |
-    | Supported:
-    | array
-    | file
-    | apcu
-    |
-    */
-
     'driver' => 'file',
-
-    /*
-    |--------------------------------------------------------------------------
-    | File Cache Path
-    |--------------------------------------------------------------------------
-    */
-
     'path' => __DIR__ . '/cache',
-
+    'ttl' => 3600,
+    'debug' => false,
 ];
+```
+
+Then load the configuration into SimpleCache:
+
+```php
+use SimpleCache\Cache;
+
+$config = require __DIR__ . '/cache.php';
+Cache::configure($config);
+```
+
+You can also configure values directly:
+
+```php
+Cache::configure([
+    'driver' => 'file',
+    'path' => __DIR__ . '/cache',
+]);
+```
+
+Supported driver values:
+
+* `array`
+* `file`
+* `apcu`
+
+You can also use `Cache::driverName()` to inspect the active driver:
+
+```php
+use SimpleCache\Cache;
+
+echo Cache::driver()->value;
+```
+
+> Note: The `apcu` driver requires the APCu PHP extension to be installed and enabled.
+> Note: The driver configuration is internally stored as a CacheDriver enum. String values such as 'apcu', 'file', and 'array' are automatically converted during configuration.
+
+---
+
+## Configuration API
+
+Update multiple configuration values:
+
+```php
+Cache::configure([
+    'driver' => 'apcu',
+    'ttl' => 600,
+]);
+```
+
+Update a single configuration value:
+
+```php
+Cache::setConfig('ttl', 600);
+```
+
+Retrieve a configuration value:
+
+```php
+Cache::getConfig('ttl');
+```
+
+Retrieve all configuration values:
+
+```php
+print_r(Cache::getConfig());
+```
+
+Reset configuration to defaults:
+
+```php
+Cache::resetConfig();
+```
+---
+
+# Examples
+
+Run the example scripts in the `examples/` folder:
+
+```bash
+php examples/basic_usage.php
+php examples/file_driver_example.php
+php examples/apcu_example.php
+php examples/facade_methods.php
 ```
 
 ---
@@ -99,13 +164,29 @@ John
 
 ```php
 use SimpleCache\Cache;
-use SimpleCache\Enums\CacheDriver;
 
-Cache::driver(CacheDriver::ARRAY);
+Cache::configure([
+    'driver' => 'array',
+]);
+
+Cache::configure([
+    'driver' => 'file',
+    'path' => __DIR__ . '/cache',
+]);
+
+Cache::configure([
+    'driver' => 'apcu',
+]);
+```
+
+Switch the active driver at runtime:
+
+```php
+use SimpleCache\Enums\CacheDriver;
 
 Cache::driver(CacheDriver::FILE);
 
-Cache::driver(CacheDriver::APCU);
+echo Cache::driver()->value;
 ```
 
 If no driver is specified, SimpleCache automatically resolves the best available driver.
@@ -286,6 +367,13 @@ Cache::decrement(
 );
 ```
 
+## Flush the Active Driver
+
+```php
+Cache::flush();
+```
+Flushes all cached values from the active cache driver.
+
 ---
 
 # Cache Statistics
@@ -321,7 +409,9 @@ Example output
 ```php
 Array
 (
-    [driver] => SimpleCache\Drivers\FileDriver
+    [driver] => file
+
+    [driver_class] => SimpleCache\Drivers\FileDriver
 
     [statistics] => Array
         (
@@ -351,13 +441,14 @@ Array
 
 # Driver Comparison
 
-| Feature          |  Array  |        File        |    APCu    |
-| ---------------- | :-----: | :----------------: | :--------: |
-| Persistent       |    ❌    |          ✅         |      ❌     |
-| TTL Support      |    ✅    |          ✅         |      ✅     |
-| Atomic Increment |    ❌    |          ❌         |      ✅     |
-| Fastest          |  ⭐⭐⭐⭐⭐  |         ⭐⭐         |    ⭐⭐⭐⭐    |
-| Best For         | Testing | Small Applications | Production |
+| Feature                       |  Array        |        File         |    APCu      |
+| -------------------------     | :-----:       | :----------------:  | :--------:   |
+| Shared Between Requests       |    ❌         |          ✅         |      ✅      |
+| Survives Server Restart       |    ❌         |          ✅         |      ❌      |
+| TTL Support                   |    ✅         |          ✅         |      ✅      |
+| Atomic Increment              |    ❌         |          ❌         |      ✅      |
+| Fastest                       |  ⭐⭐⭐⭐⭐ |         ⭐⭐        |    ⭐⭐⭐⭐ |
+| Best For                      | Testing       | Small Applications    | Production    |
 
 ---
 
@@ -369,7 +460,8 @@ Array
 | `get()`       | Retrieve a value          |
 | `has()`       | Determine if a key exists |
 | `forget()`    | Delete a key              |
-| `clear()`     | Flush the cache           |
+| `clear()`     | Clear cached values           |
+| `flush()`     | Flush the active driver
 | `remember()`  | Cache callback result     |
 | `forever()`   | Store indefinitely        |
 | `add()`       | Store only if missing     |
@@ -378,9 +470,37 @@ Array
 | `putMany()`   | Store multiple values     |
 | `increment()` | Increment integer value   |
 | `decrement()` | Decrement integer value   |
+| `resetStats()`| Reset Cache Statistics    |
 | `stats()`     | Cache statistics          |
 | `info()`      | Driver information        |
-| `driver()`    | Switch cache driver       |
+| `driver()`    | Get the current driver name |
+| `driverClass()`| Get the active driver class |
+| `configure()` | Set multiple configuration values |
+| `setConfig()` | Set a single configuration value |
+| `getConfig()` | Read configuration values |
+| `resetConfig()` | Reset configuration to defaults |
+
+---
+
+# Real World Example
+
+```php
+use SimpleCache\Cache;
+
+$user = Cache::remember(
+    'user_5000',
+    3600,
+    function () use ($pdo) {
+        $stmt = $pdo->query(
+            "SELECT * FROM users WHERE id = 5000"
+        );
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+);
+```
+
+The first request retrieves the user from the database and stores it in the cache. Subsequent requests return the cached value until the TTL expires.
 
 ---
 
@@ -433,14 +553,17 @@ CHANGELOG.md
 
 # Benchmarks
 
-Benchmark support will be added in a future release.
+## Benchmarks
 
-Planned comparisons:
+A benchmark application demonstrating the performance of each cache driver is included in the repository.
 
-* No Cache
-* Array Driver
-* File Driver
-* APCu Driver
+Typical comparisons include:
+
+- Direct database access
+- Array driver
+- File driver
+- APCu driver
+- Cache hit vs cache miss
 
 ---
 
@@ -451,17 +574,20 @@ Planned comparisons:
 * Redis Driver
 * Memcached Driver
 * Benchmark Suite
+* Additional Driver Tests
 
 ## v0.3
 
 * PSR-16 Compatibility
 * Tagged Cache Support
+* Cache Events
 
 ## v1.0
 
 * Stable Public API
-* Performance Improvements
-* Extended Documentation
+* Performance Optimizations
+* Complete Documentation
+* Long-term Support (LTS)
 
 ---
 

@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Support\TestConfiguration;
 
 class ArrayDriverTest extends TestCase
 {
+    public function setUp(): void
+    {
+        TestConfiguration::reset();
+    }
+
     public function testPut()
     {
         $driver = new \SimpleCache\Drivers\ArrayDriver();

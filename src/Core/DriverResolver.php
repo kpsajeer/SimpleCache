@@ -4,16 +4,18 @@ declare (strict_types=1);
 
 namespace SimpleCache\Core;
 
-use SimpleCache\Config\Config;
+use SimpleCache\Cache;
 use SimpleCache\Enums\CacheDriver;
 
 class DriverResolver
 {
     public static function resolve(?CacheDriver $driver = null): CacheDriver
     {
-        // $driver ??= Config::get('driver', CacheDriver::ARRAY);
+        $driverConfig = Cache::getConfig('driver', CacheDriver::ARRAY->value);
         $driver ??= CacheDriver::tryFrom(
-            Config::get('driver', CacheDriver::ARRAY->value)
+            $driverConfig instanceof CacheDriver
+                ? $driverConfig->value
+                : (string) $driverConfig
         ) ?? CacheDriver::ARRAY;
 
         if ($driver === CacheDriver::APCU) {
@@ -38,7 +40,13 @@ class DriverResolver
 
     protected static function resolveFile(): CacheDriver
     {
-        $path = Config::get('path');
+        $path = Cache::getConfig('path');
+
+        if (!is_string($path) || trim($path) === '') {
+            throw new \InvalidArgumentException(
+                'File cache path is required.'
+            );
+        }
 
         if (\is_dir($path) || @\mkdir($path, 0777, true)) {
             return CacheDriver::FILE;

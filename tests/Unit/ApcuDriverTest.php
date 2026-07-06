@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Support\TestConfiguration;
 
 class ApcuDriverTest extends TestCase
 {
@@ -13,6 +14,8 @@ class ApcuDriverTest extends TestCase
         if (!extension_loaded('apcu') || !filter_var(ini_get('apc.enable_cli'), FILTER_VALIDATE_BOOL)) {
             $this->markTestSkipped('APCu CLI is not enabled.');
         }
+
+        TestConfiguration::reset();
 
         \apcu_clear_cache();
     }
